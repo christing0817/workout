@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#101418" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="重訓紀錄" />
+  <title>重訓快速紀錄</title>
+  <style>
+    :root{--bg:#0d1014;--panel:#171c22;--line:#29313a;--text:#f6f7f8;--muted:#97a2ad;--green:#b7f06b;--green2:#20351f;--blue:#8ed8ff;--danger:#ff8f8f;--safe:env(safe-area-inset-bottom)}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif}
+    button,input,select{font:inherit} button{cursor:pointer}.app{max-width:680px;margin:auto;padding:18px 16px calc(92px + var(--safe))}
+    header{position:sticky;top:0;z-index:5;background:linear-gradient(var(--bg) 82%,transparent);padding:calc(8px + env(safe-area-inset-top)) 0 18px}
+    .eyebrow{color:var(--green);font-size:12px;font-weight:800;letter-spacing:.12em}.top{display:flex;align-items:end;justify-content:space-between;gap:12px}
+    h1{font-size:30px;line-height:1.1;margin:6px 0 0}.count{color:var(--muted);font-size:13px;white-space:nowrap}.search{margin-top:16px;width:100%;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:16px;padding:14px 16px;outline:none}.search:focus{border-color:var(--green)}
+    .tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 0 14px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{border:1px solid var(--line);background:transparent;color:var(--muted);padding:9px 16px;border-radius:999px;white-space:nowrap}.tab.active{background:var(--green);border-color:var(--green);color:#10140c;font-weight:800}
+    .list{display:grid;gap:10px}.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:15px}.card-top{display:flex;justify-content:space-between;gap:12px}.name{font-size:18px;font-weight:800}.meta{color:var(--muted);font-size:13px;margin-top:4px}.edit{border:0;background:#252d35;color:var(--text);border-radius:12px;padding:8px 12px;align-self:start}
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}.stat{background:#11161b;border-radius:13px;padding:11px}.label{color:var(--muted);font-size:11px}.value{font-size:20px;font-weight:850;margin-top:3px}.goal{color:var(--green);font-size:13px;margin-top:11px}.note{color:var(--muted);font-size:12px;margin-top:6px}
+    .empty{text-align:center;color:var(--muted);padding:52px 20px}.fab{position:fixed;right:max(18px,calc((100vw - 680px)/2 + 18px));bottom:calc(20px + var(--safe));border:0;background:var(--green);color:#10140c;font-weight:850;border-radius:18px;padding:15px 20px;box-shadow:0 8px 28px #0009}
+    .tools{display:flex;gap:8px;margin:18px 0}.secondary{flex:1;border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:13px;padding:11px}
+    dialog{width:min(92vw,520px);border:1px solid var(--line);border-radius:24px;background:var(--panel);color:var(--text);padding:0;box-shadow:0 24px 80px #000c}dialog::backdrop{background:#000a}.modal{padding:20px}.modal h2{margin:0 0 16px}.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:grid;gap:6px}.field.full{grid-column:1/-1}.field label{color:var(--muted);font-size:12px}.field input,.field select{width:100%;border:1px solid var(--line);background:#101419;color:var(--text);border-radius:12px;padding:12px;outline:none}.actions{display:flex;gap:8px;margin-top:18px}.actions button{flex:1;border:0;border-radius:13px;padding:12px}.cancel{background:#2a3139;color:var(--text)}.save{background:var(--green);color:#10140c;font-weight:800}.delete{background:#3a2023!important;color:var(--danger)}
+    .toast{position:fixed;left:50%;bottom:calc(90px + var(--safe));transform:translateX(-50%) translateY(20px);background:#eef6e8;color:#17210f;border-radius:12px;padding:10px 16px;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    @media(max-width:420px){.form{grid-template-columns:1fr}.field.full{grid-column:auto}.app{padding-left:13px;padding-right:13px}}
+  </style>
+</head>
+<body>
+<main class="app">
+  <header><div class="eyebrow">WORKOUT LOG</div><div class="top"><h1>上次做多少？</h1><div class="count" id="count"></div></div><input class="search" id="search" type="search" placeholder="搜尋動作、健身房或機台" /></header>
+  <nav class="tabs" id="tabs"></nav>
+  <section class="list" id="list"></section>
+  <div class="tools"><button class="secondary" id="exportBtn">匯出備份</button><button class="secondary" id="importBtn">匯入備份</button><input id="fileInput" type="file" accept="application/json" hidden /></div>
+</main>
+<button class="fab" id="addBtn">＋ 新增動作</button>
+<dialog id="dialog"><form class="modal" id="form" method="dialog"><h2 id="modalTitle">新增動作</h2><div class="form">
+  <div class="field"><label>部位</label><select id="part" required><option>背</option><option>胸</option><option>肩</option><option>腿臀</option><option>手</option></select></div>
+  <div class="field"><label>動作名稱</label><input id="name" required placeholder="例：臀推" /></div>
+  <div class="field"><label>健身房</label><input id="gym" placeholder="例：信義" /></div><div class="field"><label>機台</label><input id="machine" placeholder="例：L3" /></div>
+  <div class="field"><label>上次重量</label><input id="weight" placeholder="例：25 kg" /></div><div class="field"><label>上次次數</label><input id="reps" inputmode="numeric" placeholder="例：12" /></div>
+  <div class="field full"><label>下次目標</label><input id="goal" placeholder="例：同重量做到 13 次" /></div><div class="field full"><label>備註</label><input id="note" placeholder="姿勢、感受或其他提醒" /></div>
+  </div><div class="actions"><button type="button" class="delete" id="deleteBtn">刪除</button><button type="button" class="cancel" id="cancelBtn">取消</button><button type="submit" class="save">儲存</button></div></form></dialog>
+<div class="toast" id="toast">已儲存</div>
+<script>
+const defaults=[
+['背','壓胸／待確認','信義','N5','5','—','重量不變，確認動作名稱','原始分類為背'],['背','單側划船','信義','划船（右）','19','—','兩側次數一致',''],['背','待確認動作','','B5','25 kg','15','做到 16 次或小幅加重',''],['背','待確認動作','','B6','9.5 kg','15','做到 16 次或小幅加重',''],['背','拉背','','N7','26 kg','12','做到 13 次',''],['背','高位下拉','信義','N9','9 lb','15','先穩定完成 15 次','原記 4.5×2'],['背','ISO-Lateral Row','信義','H25','單邊 9','—','補上次數',''],['背','引體向上輔助','萬隆','','輔助 37.5 kg','12','同次數降低輔助重量','越低代表進步'],['背','直臂下壓','信義','','7.5','15','做到 16 次或小幅加重',''],['背','坐姿划船','萬隆','R7','4.5 kg','15','確認是公斤或片數',''],['背','高位下拉','萬隆','','第 3 片＋槓','—','補上次數',''],
+['胸','Wide Chest Press','M torture','','2.5','10','做到 11 次',''],['胸','待確認動作','信義','C6','15','15','做到 16 次或小幅加重',''],['胸','待確認動作','信義','C7','5','—','補上次數',''],['胸','待確認動作','信義','N11','5','—','補上次數',''],['胸','待確認動作','信義','A11','15','—','補上次數',''],['胸','待確認動作','信義','C3','10','15','做到 16 次或小幅加重',''],['胸','待確認動作','信義','C4','5','20','小幅加重',''],['胸','下胸','萬隆','大型工作站','3.75','—','補上次數與單位',''],['胸','蝴蝶機夾胸','','','12.5','—','補上場館與次數',''],['胸','上胸擴胸','萬隆','','4.5 kg','—','補上次數',''],['胸','Cable 下胸下推','','','3.75 lb','—','補上場館與次數',''],
+['肩','肩上舉','','','10','—','補上場館與次數',''],['肩','飛鳥','','','5','—','確認另一筆「飛鳥15」含義',''],['肩','待確認動作','信義','C1','12','—','補上動作名稱與次數',''],['肩','待確認動作','信義','T7','10','—','補上動作名稱與次數',''],['肩','待確認動作','信義','S2','5','—','補上動作名稱與次數',''],['肩','面拉','','','7.5','—','補上場館與次數',''],
+['腿臀','Leg Curl','萬隆','L3','27','—','降重確認姿勢或換機台','原記感受不佳'],['腿臀','倒蹬機','信義二樓','','25','—','補上次數',''],['腿臀','待確認動作','信義','N1','11.3','12','做到 13 次',''],['腿臀','哈克深蹲','萬隆','','25＋45','15','同重量穩定完成','很吃力'],['腿臀','待確認動作','信義','L4','27＋2','—','補上次數與單位',''],['腿臀','待確認動作','信義','L7','19','—','補上動作名稱與次數',''],['腿臀','待確認動作','信義','L8','15','—','補上動作名稱與次數',''],['手','三頭肌','萬隆','A5','—','—','完成一組基準紀錄','']
+].map((x,i)=>({id:'seed-'+i,part:x[0],name:x[1],gym:x[2],machine:x[3],weight:x[4],reps:x[5],goal:x[6],note:x[7]}));
+const parts=['背','胸','肩','腿臀','手']; let active='背',editing=null;
+let data=(()=>{try{return JSON.parse(localStorage.getItem('workout-data'))||defaults}catch{return defaults}})();
+const $=s=>document.querySelector(s), list=$('#list'), tabs=$('#tabs'), dialog=$('#dialog');
+function persist(){localStorage.setItem('workout-data',JSON.stringify(data))} function esc(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function renderTabs(){tabs.innerHTML=parts.map(p=>`<button class="tab ${p===active?'active':''}" data-part="${p}">${p}</button>`).join('');tabs.querySelectorAll('button').forEach(b=>b.onclick=()=>{active=b.dataset.part;render()})}
+function render(){renderTabs();const q=$('#search').value.trim().toLowerCase();const shown=data.filter(x=>x.part===active&&[x.name,x.gym,x.machine].join(' ').toLowerCase().includes(q));$('#count').textContent=`${shown.length} 個動作`;list.innerHTML=shown.length?shown.map(x=>`<article class="card"><div class="card-top"><div><div class="name">${esc(x.name)}</div><div class="meta">${esc([x.gym,x.machine].filter(Boolean).join(' · ')||'尚未填寫場館／機台')}</div></div><button class="edit" data-id="${x.id}">編輯</button></div><div class="stats"><div class="stat"><div class="label">上次重量</div><div class="value">${esc(x.weight||'—')}</div></div><div class="stat"><div class="label">上次次數</div><div class="value">${esc(x.reps||'—')}</div></div></div>${x.goal?`<div class="goal">下次：${esc(x.goal)}</div>`:''}${x.note?`<div class="note">${esc(x.note)}</div>`:''}</article>`).join(''):'<div class="empty">找不到動作<br>可以按右下角新增</div>';list.querySelectorAll('.edit').forEach(b=>b.onclick=()=>openForm(b.dataset.id))}
+function openForm(id=null){editing=id;const x=id?data.find(v=>v.id===id):{part:active,name:'',gym:'',machine:'',weight:'',reps:'',goal:'',note:''};$('#modalTitle').textContent=id?'編輯動作':'新增動作';['part','name','gym','machine','weight','reps','goal','note'].forEach(k=>$('#'+k).value=x[k]||'');$('#deleteBtn').style.display=id?'block':'none';dialog.showModal()}
+$('#form').onsubmit=e=>{e.preventDefault();const obj={};['part','name','gym','machine','weight','reps','goal','note'].forEach(k=>obj[k]=$('#'+k).value.trim());if(editing){const i=data.findIndex(x=>x.id===editing);data[i]={...data[i],...obj}}else data.push({id:crypto.randomUUID?crypto.randomUUID():Date.now().toString(),...obj});active=obj.part;persist();dialog.close();render();toast()};
+$('#deleteBtn').onclick=()=>{if(confirm('確定刪除這個動作？')){data=data.filter(x=>x.id!==editing);persist();dialog.close();render();toast('已刪除')}};$('#cancelBtn').onclick=()=>dialog.close();$('#addBtn').onclick=()=>openForm();$('#search').oninput=render;
+function toast(msg='已儲存'){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1400)}
+$('#exportBtn').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=`workout-backup-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href)};
+$('#importBtn').onclick=()=>$('#fileInput').click();$('#fileInput').onchange=async e=>{try{const incoming=JSON.parse(await e.target.files[0].text());if(!Array.isArray(incoming))throw 0;data=incoming;persist();render();toast('備份已匯入')}catch{alert('這個備份檔案格式不正確')}e.target.value=''};render();
+</script>
+</body></html>
